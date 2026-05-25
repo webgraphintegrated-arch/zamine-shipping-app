@@ -22,7 +22,7 @@ export function readyForPickupEmail({
         <div style="background:#061B36;border-radius:28px 28px 0 0;padding:30px;text-align:center;">
 
   <img
-    src="https://zamineshipping.com/zamine-logo.png"
+    src="https://www.zamineshipping.com/zamine-logo.png"
     alt="Zamine Shipping Services"
     style="width:180px;height:auto;margin-bottom:20px;"
   />
