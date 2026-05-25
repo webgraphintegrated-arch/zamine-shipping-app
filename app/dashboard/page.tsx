@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [customerName, setCustomerName] = useState("Customer");
   const [customerId, setCustomerId] = useState("");
-
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [storeName, setStoreName] = useState("");
   const [shippingMethod, setShippingMethod] = useState("AIR");
@@ -86,7 +86,7 @@ export default function DashboardPage() {
 
       const { data: profile } = await supabase
   .from("profiles")
-  .select("full_name, role")
+  .select("full_name, avatar_url, role")
   .eq("id", user.id)
   .single();
 
@@ -103,7 +103,7 @@ if (profile?.role === "warehouse_admin") {
       setCustomerName(
         profile?.full_name || user.user_metadata?.full_name || "Customer"
       );
-
+      setAvatarUrl(profile?.avatar_url || "");
       await fetchPackages(user.id);
       await fetchNotifications(user.id);
 
@@ -326,6 +326,11 @@ if (profile?.role === "warehouse_admin") {
       icon: Bell,
       href: "/dashboard/notifications",
     },
+    {
+                title: "Settings",
+                icon: Settings,
+                href: "/dashboard/settings",
+              },
   ].map((item) => {
     const Icon = item.icon;
 
@@ -378,8 +383,11 @@ if (profile?.role === "warehouse_admin") {
               </h1>
             </div>
 
-            <div className="flex items-center gap-4">
-              <button className="relative rounded-full bg-[#f5f9ff] p-3">
+             <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard/notifications"
+                className="relative rounded-full bg-[#f5f9ff] p-3 transition hover:bg-[#FC9700] hover:text-white"
+              >
                 <Bell className="text-[#071D3A]" size={22} />
 
                 {unreadCount > 0 && (
@@ -387,11 +395,22 @@ if (profile?.role === "warehouse_admin") {
                     {unreadCount}
                   </span>
                 )}
-              </button>
+              </Link>
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#57B7DF] text-white">
-                <User size={22} />
-              </div>
+                        <Link
+            href="/dashboard/settings"
+            className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[#57B7DF] text-white transition hover:scale-105"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile avatar"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <User size={22} />
+            )}
+          </Link>
             </div>
           </header>
           {/* =========================

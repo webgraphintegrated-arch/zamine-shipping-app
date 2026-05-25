@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 import {
   ArrowLeft,
+  Settings,
   Bell,
   CreditCard,
   FileText,
@@ -288,6 +289,11 @@ export default function CustomerBillingPage() {
       icon: Bell,
       href: "/dashboard/notifications",
     },
+    {
+  title: "Settings",
+  icon: Settings,
+  href: "/dashboard/settings",
+},
   ].map((item) => {
     const Icon = item.icon as any;
 

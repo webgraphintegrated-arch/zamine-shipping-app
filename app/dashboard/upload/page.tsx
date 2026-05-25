@@ -6,11 +6,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
 import { supabase } from "@/lib/supabaseClient";
-
+import { sendInvoiceUploadedEmail } from "@/lib/sendZamineEmail";
 import {
   ArrowLeft,
   Bell,
   FileText,
+  Settings,
   CreditCard,
 History,
   LogOut,
@@ -184,6 +185,22 @@ export default function UploadInvoicePage() {
         notification_type: "shipment",
       },
     ]);
+    /* =========================
+   START INVOICE EMAIL
+========================= */
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+await sendInvoiceUploadedEmail({
+  customerEmail: user?.email || "",
+  customerName,
+  trackingNumber,
+  storeName,
+});
+/* =========================
+   END INVOICE EMAIL
+========================= */
 
     setTrackingNumber("");
     setStoreName("");
@@ -271,6 +288,11 @@ export default function UploadInvoicePage() {
       icon: Bell,
       href: "/dashboard/notifications",
     },
+    {
+  title: "Settings",
+  icon: Settings,
+  href: "/dashboard/settings",
+},
   ].map((item) => {
     const Icon = item.icon;
 

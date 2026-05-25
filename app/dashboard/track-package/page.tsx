@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Bell,
   CheckCircle2,
+  Settings,
   Clock3,
   FileText,
   LogOut,
@@ -243,6 +244,11 @@ export default function CustomerTrackPackagePage() {
       icon: Bell,
       href: "/dashboard/notifications",
     },
+    {
+  title: "Settings",
+  icon: Settings,
+  href: "/dashboard/settings",
+},
   ].map((item) => {
     const Icon = item.icon;
 

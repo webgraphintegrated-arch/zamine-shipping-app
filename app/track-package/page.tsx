@@ -408,25 +408,68 @@ export default function TrackPackagePage() {
           </div>
 
           <div className="mt-12 space-y-5">
-            {[
-              "Invoice Received",
-              "Delivered to US Warehouse",
-              "Ready For Pickup",
-              "Delivered",
-            ].map((stage, index) => (
-              <div key={stage} className="flex gap-5 rounded-2xl bg-white p-6 shadow-lg">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#57B7DF] font-black text-white">
-                  {index + 1}
-                </div>
+            
+            {(() => {
+  const stages = [
+    "Invoice Received",
+    "Delivered to US Warehouse",
+    "Ready For Pickup",
+    "Delivered",
+  ];
 
-                <div>
-                  <h3 className="text-xl font-bold text-[#071D3A]">{stage}</h3>
-                  <p className="mt-2 text-slate-600">
-                    Your package will move through this stage as it is processed by Zamine.
-                  </p>
-                </div>
-              </div>
-            ))}
+  const currentStatus = packageData?.status || "";
+
+  const currentIndex = stages.findIndex(
+    (stage) =>
+      stage.toLowerCase() === currentStatus.toLowerCase()
+  );
+
+  return stages.map((stage, index) => {
+    const completed = index < currentIndex;
+    const active = index === currentIndex;
+
+    return (
+      <div
+        key={stage}
+        className={`flex gap-5 rounded-2xl border p-6 shadow-lg transition ${
+          completed
+            ? "border-[#57B7DF] bg-[#dff4ff]"
+            : active
+            ? "border-[#FC9700]/30 bg-[#fff8f0]"
+            : "border-[#edf2f7] bg-white"
+        }`}
+      >
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-black text-white ${
+            completed
+              ? "bg-[#57B7DF]"
+              : active
+              ? "bg-[#FC9700]"
+              : "bg-[#cbd5e1]"
+          }`}
+        >
+          {completed ? "✓" : index + 1}
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-[#071D3A]">
+            {stage}
+          </h3>
+
+          <p className="mt-2 text-slate-600">
+            {completed
+              ? "Completed successfully."
+              : active
+              ? "Your package is currently at this stage."
+              : "Pending package progress."}
+          </p>
+        </div>
+      </div>
+    );
+  });
+})()}
+
+            
           </div>
         </div>
       </section>

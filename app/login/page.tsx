@@ -15,6 +15,7 @@ const poppins = Poppins({
 
 export default function LoginPage() {
   const router = useRouter();
+ 
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -156,7 +157,14 @@ export default function LoginPage() {
                     />
                   </div>
                 </div>
-
+                <div className="flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm font-bold text-[#FC9700] transition hover:text-[#e28700]"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 {message && (
                   <div className="rounded-2xl bg-[#f5f9ff] p-4 text-sm font-semibold text-[#071D3A]">
                     {message}

@@ -256,8 +256,7 @@ export default function AboutUsPage() {
             </p>
 
             <p className="mt-5 leading-8 text-slate-600">
-              Whether you are shipping personal items, business packages, or
-              carnival products, Zamine offers dependable service and customer
+              Whether you are shipping personal items or  business packages, Zamine offers dependable service and customer
               support every step of the way.
             </p>
 

@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
+  Settings,
   History,
   LogOut,
   PackageCheck,
@@ -287,6 +288,11 @@ export default function CustomerHistoryPage() {
                 icon: Bell,
                 href:
                   "/dashboard/notifications",
+              },
+              {
+                title: "Notifications",
+                icon: Bell,
+                href: "/dashboard/notifications",
               },
             ].map((item) => {
               const Icon = item.icon;

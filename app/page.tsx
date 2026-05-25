@@ -667,7 +667,7 @@ export default function HomePage() {
               <div className="mt-10 space-y-5">
                 <div className="rounded-2xl bg-white/10 p-5">
                   <p className="mb-1 text-sm text-white/70">Hotline</p>
-                  <h4 className="text-xl font-bold">+1 (268) 736-5780</h4>
+                  <h4 className="text-xl font-bold">+1 (268) 736-5780/81</h4>
                 </div>
 
                 <div className="rounded-2xl bg-white/10 p-5">

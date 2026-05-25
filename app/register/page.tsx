@@ -7,6 +7,7 @@ import { Poppins } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Lock, Mail, MapPin, Phone, User } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { sendCustomerRegistrationEmail } from "@/lib/sendZamineEmail";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -89,6 +90,17 @@ export default function RegisterPage() {
    END AUTO PACKAGE CLAIM
 ========================= */
 }
+
+/* =========================
+   START REGISTRATION EMAIL
+========================= */
+await sendCustomerRegistrationEmail({
+  customerEmail: email,
+  customerName: fullName,
+});
+/* =========================
+   END REGISTRATION EMAIL
+========================= */
 
 setLoading(false);
 

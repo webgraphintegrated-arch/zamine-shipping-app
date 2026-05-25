@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
+import {
+  sendDeliveredEmail,
+  sendPackageReceivedEmail,
+  sendReadyForPickupEmail,
+} from "@/lib/sendZamineEmail";
 import { supabase } from "@/lib/supabaseClient";
 
 import {
@@ -245,12 +250,55 @@ function getCustomerEmail(item: any) {
       ]);
 
     if (notificationError) {
-      alert(notificationError.message);
-      return;
-    }
+  alert(notificationError.message);
+  return;
+}
 
-    await fetchPackages();
+/* =========================
+   START STATUS EMAIL AUTOMATION
+========================= */
+const packageItem = packages.find((item) => item.id === packageId);
+
+if (packageItem?.customer?.email) {
+  const customerEmail = packageItem.customer.email;
+  const customerName = packageItem.customer.full_name || "Customer";
+
+  if (status === "Invoice Received") {
+    await sendPackageReceivedEmail({
+      customerEmail,
+      customerName,
+      trackingNumber,
+      storeName: packageItem.store_name,
+    });
   }
+
+  if (status === "Ready For Pickup") {
+    await sendReadyForPickupEmail({
+      customerEmail,
+      customerName,
+      trackingNumber,
+      storeName: packageItem.store_name,
+      balanceDue: Number(packageItem.total_due || 0),
+    });
+  }
+
+  if (status === "Delivered") {
+    await sendDeliveredEmail({
+      customerEmail,
+      customerName,
+      trackingNumber,
+      storeName: packageItem.store_name,
+    });
+  }
+} else {
+  alert("Status updated, but no customer email was found.");
+}
+/* =========================
+   END STATUS EMAIL AUTOMATION
+========================= */
+
+await fetchPackages();
+}
   /* =========================
      END UPDATE STATUS
   ========================= */
@@ -346,6 +394,161 @@ function getCustomerEmail(item: any) {
   }
   /* =========================
      END UPDATE BILLING
+  ========================= */
+
+  /* =========================
+     START GENERATE INVOICE
+  ========================= */
+  async function generateInvoice(item: PackageItem) {
+    if (!item.customer_id) {
+      alert("No customer linked to this package.");
+      return;
+    }
+
+    if (!item.customer?.email) {
+      alert("No customer email found.");
+      return;
+    }
+
+    const shippingFee = Number(item.shipping_cost || 0);
+    const customsFee = Number(item.customs_cost || 0);
+    const discount = Number(item.discount || 0);
+    const weight = Number(item.weight_lbs || 0);
+    const totalAmount = Math.max(shippingFee + customsFee - discount, 0);
+
+    if (totalAmount <= 0) {
+      alert("Please enter shipping/customs charges before generating invoice.");
+      return;
+    }
+
+    const invoiceNumber = `ZSI-${Date.now()}`;
+    const customerName = item.customer.full_name || "Customer";
+
+    const { error: invoiceError } = await supabase.from("invoices").insert([
+      {
+        package_id: item.id,
+        customer_id: item.customer_id,
+        invoice_number: invoiceNumber,
+        weight,
+        customs_fee: customsFee,
+        shipping_fee: shippingFee,
+        handling_fee: 0,
+        other_fee: 0,
+        total_amount: totalAmount,
+        amount_paid: 0,
+        status: "Unpaid",
+        notes: `Invoice generated for package ${item.tracking_number}`,
+      },
+    ]);
+
+    if (invoiceError) {
+      alert(invoiceError.message);
+      return;
+    }
+
+    const { error: packageError } = await supabase
+      .from("packages")
+      .update({
+        invoice_number: invoiceNumber,
+        invoice_sent: true,
+        total_due: totalAmount,
+        payment_status: "Unpaid",
+        status: "Ready For Pickup",
+      })
+      .eq("id", item.id);
+
+    if (packageError) {
+      alert(packageError.message);
+      return;
+    }
+
+    await supabase.from("notifications").insert([
+      {
+        customer_id: item.customer_id,
+        package_id: item.id,
+        title: "Invoice Ready",
+        notification_type: "payment",
+        message: `Your invoice ${invoiceNumber} for package (${item.tracking_number}) is ready. Total due: EC$${totalAmount.toFixed(2)}.`,
+      },
+    ]);
+
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: item.customer.email,
+        subject: `Your Zamine invoice is ready - ${invoiceNumber}`,
+        html: `
+          <div style="margin:0;padding:0;background:#f5f9ff;font-family:Arial,Helvetica,sans-serif;color:#071D3A;">
+            <div style="max-width:680px;margin:0 auto;padding:30px 18px;">
+              <div style="background:#061B36;border-radius:28px 28px 0 0;padding:30px;text-align:center;">
+                <h1 style="margin:0;color:#ffffff;font-size:30px;font-weight:900;">Zamine Shipping</h1>
+                <p style="margin:10px 0 0;color:#57B7DF;font-size:14px;font-weight:700;">Your package invoice is ready</p>
+              </div>
+
+              <div style="background:#ffffff;padding:34px;border-radius:0 0 28px 28px;">
+                <h2 style="margin:0 0 16px;font-size:28px;color:#071D3A;">Hi ${customerName},</h2>
+
+                <p style="font-size:16px;line-height:1.7;color:#4b5563;">
+                  Your invoice has been generated for your package. Please review the breakdown below.
+                </p>
+
+                <div style="margin:26px 0;padding:22px;background:#f5f9ff;border-radius:20px;">
+                  <p style="margin:0 0 10px;font-size:13px;font-weight:800;color:#FC9700;text-transform:uppercase;">Invoice Details</p>
+                  <p style="margin:8px 0;font-size:16px;"><strong>Invoice Number:</strong> ${invoiceNumber}</p>
+                  <p style="margin:8px 0;font-size:16px;"><strong>Tracking Number:</strong> ${item.tracking_number}</p>
+                  <p style="margin:8px 0;font-size:16px;"><strong>Store:</strong> ${item.store_name || "N/A"}</p>
+                  <p style="margin:8px 0;font-size:16px;"><strong>Weight:</strong> ${weight} lbs</p>
+                </div>
+
+                <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+                  <tr>
+                    <td style="padding:12px;border-bottom:1px solid #e5edf7;color:#64748b;">Shipping Fee</td>
+                    <td style="padding:12px;border-bottom:1px solid #e5edf7;text-align:right;font-weight:800;">EC$${shippingFee.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px;border-bottom:1px solid #e5edf7;color:#64748b;">Customs Fee</td>
+                    <td style="padding:12px;border-bottom:1px solid #e5edf7;text-align:right;font-weight:800;">EC$${customsFee.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px;border-bottom:1px solid #e5edf7;color:#64748b;">Discount</td>
+                    <td style="padding:12px;border-bottom:1px solid #e5edf7;text-align:right;font-weight:800;">- EC$${discount.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:16px;font-size:18px;font-weight:900;color:#071D3A;">Total Due</td>
+                    <td style="padding:16px;text-align:right;font-size:22px;font-weight:900;color:#FC9700;">EC$${totalAmount.toFixed(2)}</td>
+                  </tr>
+                </table>
+
+                <p style="font-size:16px;line-height:1.7;color:#4b5563;margin-top:24px;">
+                  Your package is ready for pickup once payment is completed according to Zamine Shipping Services procedures.
+                </p>
+
+                <a href="https://zamineshipping.com/dashboard/billing" style="display:inline-block;margin-top:24px;background:#FC9700;color:#ffffff;text-decoration:none;padding:15px 26px;border-radius:999px;font-weight:800;">
+                  View Billing Details
+                </a>
+
+                <p style="margin-top:34px;font-size:14px;line-height:1.7;color:#6b7280;">
+                  Need help? Reply to this email or contact Zamine Shipping Services for support.
+                </p>
+              </div>
+
+              <p style="text-align:center;margin-top:22px;font-size:12px;color:#94a3b8;">
+                © 2026 Zamine Shipping Services. All rights reserved.
+              </p>
+            </div>
+          </div>
+        `,
+      }),
+    });
+
+    alert("Invoice generated and sent to customer.");
+    await fetchPackages();
+  }
+  /* =========================
+     END GENERATE INVOICE
   ========================= */
 
   /* =========================
@@ -788,6 +991,40 @@ function getCustomerEmail(item: any) {
                 END COPY INVITE
             ========================= */}
                         <div className="flex flex-wrap gap-3">
+                              <button
+                    onClick={async () => {
+                      if (!item.customer?.email) {
+                        alert("No customer email found.");
+                        return;
+                      }
+
+                      const balanceDue = Number(item.total_due || 0);
+
+                      await sendReadyForPickupEmail({
+                        customerEmail: item.customer.email,
+                        customerName:
+                          item.customer.full_name || "Customer",
+                        trackingNumber: item.tracking_number,
+                        storeName: item.store_name,
+                        balanceDue,
+                      });
+
+                      await supabase.from("notifications").insert([
+                        {
+                          customer_id: item.customer_id,
+                          package_id: item.id,
+                          title: "Package Ready For Pickup",
+                          notification_type: "shipment",
+                          message: `Your package (${item.tracking_number}) is ready for pickup.`,
+                        },
+                      ]);
+
+                          alert("Ready for pickup email sent.");
+                        }}
+                        className="mt-3 rounded-2xl bg-green-600 px-5 py-3 text-sm font-black text-white"
+                      >
+                        Send Ready For Pickup Email
+                      </button>
                           <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#071D3A] shadow-sm">
                             {item.tracking_number}
                           </span>
@@ -1036,6 +1273,15 @@ function getCustomerEmail(item: any) {
                           <h3 className="mt-1 text-2xl font-black">
                             EC${Number(item.total_due || 0).toFixed(2)}
                           </h3>
+                        </div>
+
+                        <div className="flex items-end">
+                          <button
+                            onClick={() => generateInvoice(item)}
+                            className="h-12 w-full rounded-2xl bg-[#FC9700] px-5 text-sm font-black text-white transition hover:bg-[#e28700]"
+                          >
+                            Generate & Send Invoice
+                          </button>
                         </div>
                       </div>
                       {/* =========================
