@@ -483,8 +483,19 @@ await fetchPackages();
         html: `
           <div style="margin:0;padding:0;background:#f5f9ff;font-family:Arial,Helvetica,sans-serif;color:#071D3A;">
             <div style="max-width:680px;margin:0 auto;padding:30px 18px;">
-              <div style="background:#061B36;border-radius:28px 28px 0 0;padding:30px;text-align:center;">
-                <h1 style="margin:0;color:#ffffff;font-size:30px;font-weight:900;">Zamine Shipping</h1>
+              <div style="background:#061B36;border-radius:28px 28px 0 0;padding:40px 30px;text-align:center;">
+
+  <div style="display:inline-block;background:#ffffff;border-radius:18px;padding:14px 20px;margin-bottom:22px;">
+    <img
+      src="https://www.zamineshipping.com/zamine-logo.png"
+      alt="Zamine Shipping Services"
+      style="width:190px;height:auto;display:block;"
+    />
+  </div>
+
+  <h1 style="margin:0;color:#ffffff;font-size:30px;font-weight:900;">
+    Zamine Shipping
+  </h1>
                 <p style="margin:10px 0 0;color:#57B7DF;font-size:14px;font-weight:700;">Your package invoice is ready</p>
               </div>
 
