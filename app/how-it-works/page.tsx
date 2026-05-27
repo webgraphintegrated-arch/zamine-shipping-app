@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Poppins } from "next/font/google";
 import { useState } from "react";
+import ShippingCalculator from "@/components/ShippingCalculator";
 import {
   ArrowRight,
   Clock,
@@ -50,13 +51,42 @@ export default function HowItWorksPage() {
   ];
 
   const faqs = [
-    "How do I format my shipping address?",
-    "Do I need to include AIR or SEA?",
-    "When should I send my invoice?",
-    "How long does customs clearance take?",
-    "Do you offer islandwide delivery?",
-    "How do I track my package?",
-  ];
+  {
+    question: "How do I format my shipping address?",
+    answer:
+      "Use your assigned ZSS shipping code, followed by your full name and either AIR or SEA depending on your shipping method. Example: ZSS John Doe AIR.",
+  },
+
+  {
+    question: "Do I need to include AIR or SEA?",
+    answer:
+      "Yes. Adding AIR or SEA helps our warehouse team correctly process and route your package based on your selected shipping method.",
+  },
+
+  {
+    question: "When should I send my invoice?",
+    answer:
+      "Upload your invoice as soon as your order is placed or once your tracking number becomes available. This helps speed up customs clearance and package processing.",
+  },
+
+  {
+    question: "How long does customs clearance take?",
+    answer:
+      "Customs processing times can vary depending on shipment volume, inspections, and package type. Our team works to process and clear packages as quickly as possible.",
+  },
+
+  {
+    question: "Do you offer islandwide delivery?",
+    answer:
+      "Yes. Zamine Shipping Services offers convenient pickup and islandwide delivery options throughout Antigua.",
+  },
+
+  {
+    question: "How do I track my package?",
+    answer:
+      "Once your package is processed, you can log into your customer dashboard to view shipment updates, invoice status, and pickup notifications.",
+  },
+];
 
   return (
     <main className={`${poppins.className} min-h-screen bg-white text-[#071D3A]`}>
@@ -261,60 +291,60 @@ export default function HowItWorksPage() {
           </div>
         </div>
       </section>
-
+<ShippingCalculator />
       {/* FAQ */}
-      <section className="py-24">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="rounded-[34px] bg-[#f5f9ff] p-8 md:p-12">
-            <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#FC9700] shadow-sm">
-                  <HelpCircle size={18} />
-                  Frequently Asked Questions
-                </div>
+<section className="py-24">
+  <div className="mx-auto max-w-7xl px-6">
+    <div className="rounded-[34px] bg-[#f5f9ff] p-8 md:p-12">
 
-                <h2 className="mt-5 text-4xl font-black">
-                  Got Questions?
-                  <br />
-                  We’ve Got Answers
-                </h2>
+      <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
 
-                <p className="mt-4 leading-8 text-slate-600">
-                  Quick answers to help customers understand the shipping process.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {faqs.map((question) => (
-                  <details key={question} className="group rounded-2xl bg-white p-5 shadow-sm">
-                    <summary className="flex cursor-pointer list-none items-center justify-between font-bold">
-                      {question}
-                      <span className="text-[#FC9700] transition group-open:rotate-45">+</span>
-                    </summary>
-
-                    <p className="mt-4 leading-7 text-slate-600">
-                      Please contact Zamine Shipping Services for the most accurate answer based on your package type, shipping method, and status.
-                    </p>
-                  </details>
-                ))}
-              </div>
-            </div>
+        {/* LEFT */}
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#FC9700] shadow-sm">
+            <HelpCircle size={18} />
+            Frequently Asked Questions
           </div>
+
+          <h2 className="mt-5 text-4xl font-black">
+            Got Questions?
+            <br />
+            We’ve Got Answers
+          </h2>
+
+          <p className="mt-4 leading-8 text-slate-600">
+            Quick answers to help customers understand the shipping process.
+          </p>
         </div>
-      </section>
-      {/* MAP SECTION */}
-<section className="bg-white">
-  <div className="w-full h-[420px] md:h-[520px]">
-    <iframe
-      src="https://maps.google.com/maps?q=17.13222551108614,-61.81308652502546&z=16&output=embed"
-      width="100%"
-      height="100%"
-      loading="lazy"
-      className="border-0 grayscale opacity-80"
-    />
+
+        {/* RIGHT */}
+        <div className="space-y-4">
+
+          {faqs.map((faq) => (
+            <details
+              key={faq.question}
+              className="group rounded-2xl bg-white p-5 shadow-sm transition"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between text-lg font-bold text-[#071D3A]">
+
+                {faq.question}
+
+                <span className="text-[#FC9700] transition duration-300 group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+
+              <p className="mt-4 leading-8 text-slate-600">
+                {faq.answer}
+              </p>
+            </details>
+          ))}
+
+        </div>
+      </div>
+    </div>
   </div>
 </section>
-
 {/* FOOTER */}
 <footer className="bg-[#57b7df] py-7 text-white">
   <div className="mx-auto max-w-7xl px-6">

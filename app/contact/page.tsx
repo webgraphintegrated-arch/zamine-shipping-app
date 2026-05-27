@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Clock,
   HelpCircle,
-  Mail,
   MapPin,
   Menu,
   Phone,
@@ -24,9 +23,65 @@ const poppins = Poppins({
 export default function ContactPage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactStatus, setContactStatus] = useState("");
+
+  async function handleContactSubmit() {
+    setContactStatus("");
+
+    if (!contactName || !contactEmail || !contactMessage) {
+      setContactStatus("Please complete all fields.");
+      return;
+    }
+
+    try {
+      setContactLoading(true);
+
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: "zamine.shipping268@gmail.com",
+          subject: `New Contact Message - ${contactName}`,
+          html: `
+            <div style="font-family:Arial,sans-serif;padding:20px;line-height:1.7;color:#071D3A;">
+              <div style="text-align:center;margin-bottom:30px;">
+                <img src="https://www.zamineshipping.com/zamine-logo.png" alt="Zamine Shipping" style="width:180px;height:auto;" />
+              </div>
+
+              <h2>New Website Contact Message</h2>
+
+              <p><strong>Full Name:</strong><br />${contactName}</p>
+              <p><strong>Email:</strong><br />${contactEmail}</p>
+              <p><strong>Message:</strong><br />${contactMessage}</p>
+            </div>
+          `,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed");
+      }
+
+      setContactName("");
+      setContactEmail("");
+      setContactMessage("");
+      setContactStatus("Message sent successfully.");
+    } catch (error) {
+      console.error(error);
+      setContactStatus("Something went wrong. Please try again.");
+    } finally {
+      setContactLoading(false);
+    }
+  }
+
   return (
     <main className={`${poppins.className} min-h-screen bg-white text-[#071D3A]`}>
-      {/* TOP INFO BAR */}
       <div className="hidden bg-[#57B7DF] text-white lg:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 text-sm font-semibold">
           <div className="flex items-center gap-8">
@@ -48,7 +103,6 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* NAVBAR */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#061B36]/95 text-white shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link href="/">
@@ -67,7 +121,7 @@ export default function ContactPage() {
             <Link href="/how-it-works" className="transition hover:text-[#FC9700]">How It Works</Link>
             <Link href="/track-package" className="transition hover:text-[#FC9700]">Track Package</Link>
             <Link href="/about-us" className="transition hover:text-[#FC9700]">About Us</Link>
-             <Link href="/contact" className="text-[#FC9700]">Contact</Link>
+            <Link href="/contact" className="text-[#FC9700]">Contact</Link>
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
@@ -100,64 +154,26 @@ export default function ContactPage() {
             <nav className="flex flex-col gap-4 text-sm font-semibold">
               <Link href="/" onClick={() => setMenuOpen(false)}>Home</Link>
               <Link href="/how-it-works" onClick={() => setMenuOpen(false)}>How It Works</Link>
-              <Link href="/track-package" className="text-[#FC9700]" onClick={() => setMenuOpen(false)}>Track Package</Link>
+              <Link href="/track-package" onClick={() => setMenuOpen(false)}>Track Package</Link>
               <Link href="/about-us" onClick={() => setMenuOpen(false)}>About Us</Link>
-              <Link href="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+              <Link href="/contact" className="text-[#FC9700]" onClick={() => setMenuOpen(false)}>Contact</Link>
             </nav>
 
             <div className="mt-6 flex flex-col gap-3">
-              <Link
-                href="/login"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-2xl border border-white/10 px-5 py-4 text-center font-bold text-white"
-              >
+              <Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-2xl border border-white/10 px-5 py-4 text-center font-bold text-white">
                 Login
               </Link>
 
-              <Link
-                href="/register"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-2xl bg-[#FC9700] px-5 py-4 text-center font-bold text-white"
-              >
+              <Link href="/register" onClick={() => setMenuOpen(false)} className="rounded-2xl bg-[#FC9700] px-5 py-4 text-center font-bold text-white">
                 Register
               </Link>
-            </div>
-
-            <div className="mt-6 space-y-4 rounded-2xl bg-white/10 p-5 text-sm text-white/90">
-              <div className="flex gap-3">
-                <MapPin size={18} className="mt-1 shrink-0 text-[#FC9700]" />
-                <span>Utility Dr, Cassada Gardens, Antigua</span>
-              </div>
-
-              <div className="flex gap-3">
-                <Phone size={18} className="mt-1 shrink-0 text-[#FC9700]" />
-                <span>(268) 736-5780 / 5781</span>
-              </div>
-
-              <div className="flex gap-3">
-                <Clock size={18} className="mt-1 shrink-0 text-[#FC9700]" />
-                <span>
-                  Mon - Thu: 9AM - 5PM
-                  <br />
-                  Fri: 8AM - 4PM
-                  <br />
-                  Sat - Sun: Closed
-                </span>
-              </div>
             </div>
           </div>
         )}
       </header>
 
-      {/* HERO */}
       <section className="relative overflow-hidden bg-[#061B36] py-28 text-white">
-        <Image
-          src="/hero-bg.png"
-          alt="Contact Zamine"
-          fill
-          className="object-cover opacity-20"
-        />
-
+        <Image src="/hero-bg.png" alt="Contact Zamine" fill className="object-cover opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#061B36] via-[#061B36]/90 to-[#061B36]/70" />
 
         <div className="relative z-10 mx-auto max-w-7xl px-6 text-center">
@@ -170,26 +186,21 @@ export default function ContactPage() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-white/80">
-            Contact our team for shipping instructions, package updates, customs
-            clearance support, delivery information, and general inquiries.
+            Contact our team for shipping instructions, package updates, customs clearance support, delivery information, and general inquiries.
           </p>
         </div>
       </section>
 
-      {/* CONTACT SECTION */}
       <section className="bg-[#f5f9ff] px-6 py-24">
         <div className="mx-auto max-w-7xl">
           <div className="grid items-stretch gap-10 lg:grid-cols-[1.3fr_0.7fr]">
-            {/* FORM */}
             <div className="flex h-full flex-col rounded-[32px] bg-white p-8 shadow-xl md:p-12">
               <h2 className="text-3xl font-black text-[#071D3A]">
                 Send us a message
               </h2>
 
               <p className="mt-4 leading-7 text-[#6B7280]">
-                Have questions about shipping, customs clearance or package
-                tracking? Fill out the form below and our team will get back to
-                you shortly.
+                Have questions about shipping, customs clearance or package tracking? Fill out the form below and our team will get back to you shortly.
               </p>
 
               <div className="mt-10 grid gap-6 md:grid-cols-2">
@@ -201,6 +212,8 @@ export default function ContactPage() {
                   <input
                     type="text"
                     placeholder="Enter your full name"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
                     className="h-14 w-full rounded-2xl border border-[#dbe4f0] px-5 outline-none focus:border-[#1587D4]"
                   />
                 </div>
@@ -213,6 +226,8 @@ export default function ContactPage() {
                   <input
                     type="email"
                     placeholder="Enter your email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
                     className="h-14 w-full rounded-2xl border border-[#dbe4f0] px-5 outline-none focus:border-[#1587D4]"
                   />
                 </div>
@@ -226,30 +241,40 @@ export default function ContactPage() {
                 <textarea
                   rows={10}
                   placeholder="Enter your message"
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
                   className="min-h-[260px] w-full flex-1 rounded-2xl border border-[#dbe4f0] p-5 outline-none focus:border-[#1587D4]"
                 />
               </div>
 
-              <button className="mt-8 rounded-full bg-[#FC9700] px-10 py-4 font-bold text-white shadow-lg transition hover:bg-[#e88900]">
-                Send Message
+              <button
+                onClick={handleContactSubmit}
+                disabled={contactLoading}
+                className="mt-8 rounded-full bg-[#FC9700] px-10 py-4 font-bold text-white shadow-lg transition hover:bg-[#e88900] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {contactLoading ? "Sending..." : "Send Message"}
               </button>
+
+              {contactStatus && (
+                <p className="mt-4 text-sm font-semibold text-[#071D3A]">
+                  {contactStatus}
+                </p>
+              )}
             </div>
 
-            {/* INFO CARD */}
             <div className="h-full rounded-[32px] bg-[#58b6dd] p-8 text-white shadow-xl">
               <h2 className="text-3xl font-black leading-tight">
                 Contact Information
               </h2>
 
               <p className="mt-4 leading-7 text-white/80">
-                Our team is available during business hours to assist with all
-                your shipping and delivery needs.
+                Our team is available during business hours to assist with all your shipping and delivery needs.
               </p>
 
               <div className="mt-10 space-y-5">
                 <div className="rounded-2xl bg-white/10 p-5">
                   <p className="mb-1 text-sm text-white/70">Hotline</p>
-                  <h3 className="text-xl font-bold">+1 (268) 736-5780</h3>
+                  <h3 className="text-xl font-bold">+1 (268) 736-5780 / 5781</h3>
                 </div>
 
                 <div className="rounded-2xl bg-white/10 p-5">
@@ -284,7 +309,6 @@ export default function ContactPage() {
         </div>
       </section>
       
-      {/* MAP */}
       <section className="bg-white">
         <div className="h-[420px] w-full md:h-[520px]">
           <iframe
@@ -297,7 +321,6 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className="bg-[#f5f9ff] py-24">
         <div className="mx-auto max-w-7xl px-6">
           <div className="rounded-[34px] bg-white p-8 shadow-xl md:p-12">
@@ -315,8 +338,7 @@ export default function ContactPage() {
                 </h2>
 
                 <p className="mt-4 leading-8 text-slate-600">
-                  Quick answers to help you understand how to contact Zamine and
-                  get shipping support.
+                  Quick answers to help you understand how to contact Zamine and get shipping support.
                 </p>
               </div>
 
@@ -339,10 +361,7 @@ export default function ContactPage() {
                     a: "Yes. For the best assistance, have your tracking number, invoice, full name, and shipping method ready.",
                   },
                 ].map((faq) => (
-                  <details
-                    key={faq.q}
-                    className="group rounded-2xl bg-[#f5f9ff] p-5"
-                  >
+                  <details key={faq.q} className="group rounded-2xl bg-[#f5f9ff] p-5">
                     <summary className="flex cursor-pointer list-none items-center justify-between font-bold">
                       {faq.q}
                       <span className="text-[#FC9700] transition group-open:rotate-45">
@@ -359,7 +378,6 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="bg-[#57b7df] py-7 text-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 md:flex-row">
           <p className="text-center text-sm text-white/90 md:text-left">

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Poppins } from "next/font/google";
+import ShippingCalculator from "@/components/ShippingCalculator";
 
 import {
   ArrowRight,
@@ -32,6 +33,12 @@ const poppins = Poppins({
 
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
+
+const [contactName, setContactName] = useState("");
+const [contactEmail, setContactEmail] = useState("");
+const [contactMessage, setContactMessage] = useState("");
+const [contactLoading, setContactLoading] = useState(false);
+const [contactStatus, setContactStatus] = useState("");
 
   const services = [
     {
@@ -99,7 +106,81 @@ export default function HomePage() {
       a: "Once your package is processed, you can receive updates from warehouse arrival to Antigua pickup or delivery.",
     },
   ];
+  async function handleContactSubmit() {
+  setContactStatus("");
 
+  if (!contactName || !contactEmail || !contactMessage) {
+    setContactStatus("Please complete all fields.");
+    return;
+  }
+
+  try {
+    setContactLoading(true);
+
+    const response = await fetch("/api/send-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        to: "zamine.shipping268@gmail.com",
+
+        subject: `New Contact Form Message - ${contactName}`,
+
+        html: `
+          <div style="font-family:Arial,sans-serif;padding:20px;line-height:1.7;color:#071D3A;">
+
+            <div style="text-align:center;margin-bottom:30px;">
+              <img
+                src="https://www.zamineshipping.com/zamine-logo.png"
+                alt="Zamine Shipping"
+                style="width:180px;height:auto;"
+              />
+            </div>
+
+            <h2>New Website Contact Message</h2>
+
+            <p>
+              <strong>Full Name:</strong><br />
+              ${contactName}
+            </p>
+
+            <p>
+              <strong>Email:</strong><br />
+              ${contactEmail}
+            </p>
+
+            <p>
+              <strong>Message:</strong><br />
+              ${contactMessage}
+            </p>
+
+          </div>
+        `,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed");
+    }
+
+    setContactName("");
+    setContactEmail("");
+    setContactMessage("");
+
+    setContactStatus("Message sent successfully.");
+
+  } catch (error) {
+    console.error(error);
+
+    setContactStatus(
+      "Something went wrong. Please try again."
+    );
+  } finally {
+    setContactLoading(false);
+  }
+}
   return (
     <main className={`${poppins.className} min-h-screen bg-white text-[#071D3A]`}>
       {/* TOP INFO BAR */}
@@ -549,7 +630,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+<ShippingCalculator />
       {/* FAQ */}
       <section id="faq" className="bg-white py-24">
         <div className="mx-auto max-w-7xl px-6">
@@ -593,103 +674,141 @@ export default function HomePage() {
       </section>
 
       {/* CONTACT */}
-      <section id="contact" className="bg-[#f5f9ff] px-6 pb-20 pt-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-14 text-center">
-            <span className="text-sm font-semibold uppercase tracking-[4px] text-[#FC9700]">
-              Contact Us
-            </span>
+<section id="contact" className="bg-[#f5f9ff] px-6 pb-20 pt-10">
+  <div className="mx-auto max-w-7xl">
+    <div className="mb-14 text-center">
+      <span className="text-sm font-semibold uppercase tracking-[4px] text-[#FC9700]">
+        Contact Us
+      </span>
 
-            <h2 className="mt-4 text-4xl font-black text-[#071D3A] md:text-5xl">
-              We're Here To Help
-            </h2>
+      <h2 className="mt-4 text-4xl font-black text-[#071D3A] md:text-5xl">
+        We're Here To Help
+      </h2>
+    </div>
+
+    <div className="grid items-stretch gap-10 lg:grid-cols-[1.3fr_0.7fr]">
+
+      {/* FORM */}
+      <div className="flex h-full flex-col rounded-[32px] bg-white p-8 shadow-xl md:p-12">
+        <h3 className="mb-3 text-3xl font-black text-[#071D3A]">
+          Send us a message
+        </h3>
+
+        <p className="mb-10 leading-7 text-[#6B7280]">
+          Have questions about shipping, customs clearance or package tracking?
+          Fill out the form below.
+        </p>
+
+        <div className="grid gap-6 md:grid-cols-2">
+
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-[#071D3A]">
+              Full Name
+            </label>
+
+            <input
+              type="text"
+              placeholder="Enter your full name"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              className="h-14 w-full rounded-2xl border border-[#dbe4f0] px-5 outline-none focus:border-[#1587D4]"
+            />
           </div>
 
-          <div className="grid items-stretch gap-10 lg:grid-cols-[1.3fr_0.7fr]">
-            <div className="flex h-full flex-col rounded-[32px] bg-white p-8 shadow-xl md:p-12">
-              <h3 className="mb-3 text-3xl font-black text-[#071D3A]">
-                Send us a message
-              </h3>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-[#071D3A]">
+              Email
+            </label>
 
-              <p className="mb-10 leading-7 text-[#6B7280]">
-                Have questions about shipping, customs clearance or package tracking? Fill out the form below.
-              </p>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#071D3A]">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter your full name"
-                    className="h-14 w-full rounded-2xl border border-[#dbe4f0] px-5 outline-none focus:border-[#1587D4]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#071D3A]">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="h-14 w-full rounded-2xl border border-[#dbe4f0] px-5 outline-none focus:border-[#1587D4]"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-1 flex-col">
-                <label className="mb-2 block text-sm font-semibold text-[#071D3A]">
-                  Message
-                </label>
-                <textarea
-                  rows={10}
-                  placeholder="Enter your message"
-                  className="min-h-[260px] w-full flex-1 rounded-2xl border border-[#dbe4f0] p-5 outline-none focus:border-[#1587D4]"
-                />
-              </div>
-
-              <button className="mt-8 rounded-full bg-[#FC9700] px-10 py-4 font-bold text-white shadow-lg transition hover:bg-[#e88900]">
-                Send Message
-              </button>
-            </div>
-
-            <div className="h-full rounded-[32px] bg-[#58b6dd] p-8 text-white shadow-xl">
-              <h3 className="text-3xl font-black leading-tight">
-                Contact Information
-              </h3>
-
-              <p className="mt-4 leading-7 text-white/80">
-                Our team is available during business hours to assist with all your shipping and delivery needs.
-              </p>
-
-              <div className="mt-10 space-y-5">
-                <div className="rounded-2xl bg-white/10 p-5">
-                  <p className="mb-1 text-sm text-white/70">Hotline</p>
-                  <h4 className="text-xl font-bold">+1 (268) 736-5780/81</h4>
-                </div>
-
-                <div className="rounded-2xl bg-white/10 p-5">
-                  <p className="mb-1 text-sm text-white/70">Email</p>
-                  <h4 className="break-all text-lg font-bold">
-                    zamine.shipping268@gmail.com
-                  </h4>
-                </div>
-
-                <div className="rounded-2xl bg-white/10 p-5">
-                  <p className="mb-1 text-sm text-white/70">Address</p>
-                  <h4 className="text-lg font-bold leading-7">
-                    Utility Dr, Cassada Gardens,
-                    <br />
-                    St John's, Antigua
-                  </h4>
-                </div>
-              </div>
-            </div>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              className="h-14 w-full rounded-2xl border border-[#dbe4f0] px-5 outline-none focus:border-[#1587D4]"
+            />
           </div>
         </div>
-      </section>
+
+        <div className="mt-6 flex flex-1 flex-col">
+          <label className="mb-2 block text-sm font-semibold text-[#071D3A]">
+            Message
+          </label>
+
+          <textarea
+            rows={10}
+            placeholder="Enter your message"
+            value={contactMessage}
+            onChange={(e) => setContactMessage(e.target.value)}
+            className="min-h-[260px] w-full flex-1 rounded-2xl border border-[#dbe4f0] p-5 outline-none focus:border-[#1587D4]"
+          />
+        </div>
+
+        <button
+          onClick={handleContactSubmit}
+          disabled={contactLoading}
+          className="mt-8 rounded-full bg-[#FC9700] px-10 py-4 font-bold text-white shadow-lg transition hover:bg-[#e88900] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {contactLoading ? "Sending..." : "Send Message"}
+        </button>
+
+        {contactStatus && (
+          <p className="mt-4 text-sm font-semibold text-[#071D3A]">
+            {contactStatus}
+          </p>
+        )}
+      </div>
+
+      {/* CONTACT INFO */}
+      <div className="h-full rounded-[32px] bg-[#58b6dd] p-8 text-white shadow-xl">
+        <h3 className="text-3xl font-black leading-tight">
+          Contact Information
+        </h3>
+
+        <p className="mt-4 leading-7 text-white/80">
+          Our team is available during business hours to assist with all your shipping and delivery needs.
+        </p>
+
+        <div className="mt-10 space-y-5">
+
+          <div className="rounded-2xl bg-white/10 p-5">
+            <p className="mb-1 text-sm text-white/70">
+              Hotline
+            </p>
+
+            <h4 className="text-xl font-bold">
+              +1 (268) 736-5780/81
+            </h4>
+          </div>
+
+          <div className="rounded-2xl bg-white/10 p-5">
+            <p className="mb-1 text-sm text-white/70">
+              Email
+            </p>
+
+            <h4 className="break-all text-lg font-bold">
+              zamine.shipping268@gmail.com
+            </h4>
+          </div>
+
+          <div className="rounded-2xl bg-white/10 p-5">
+            <p className="mb-1 text-sm text-white/70">
+              Address
+            </p>
+
+            <h4 className="text-lg font-bold leading-7">
+              Utility Dr, Cassada Gardens,
+              <br />
+              St John's, Antigua
+            </h4>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
       {/* MAP */}
       <section className="bg-white">
