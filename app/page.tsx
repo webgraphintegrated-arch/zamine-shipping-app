@@ -825,21 +825,43 @@ const [contactStatus, setContactStatus] = useState("");
 
       {/* FOOTER */}
       <footer className="bg-[#57b7df] py-7 text-white">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 md:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
+
           <p className="text-center text-sm text-white/90 md:text-left">
             © 2026 Zamine Shipping Services. All Rights Reserved.
           </p>
 
-          <p className="text-center text-[11px] text-white/70">
-            Designed and Developed by{" "}
-            <a
-              href="https://webgraphintegrated.com"
-              target="_blank"
-              className="font-medium transition hover:text-[#071D3A]"
-            >
-              Webgraph Integrated
-            </a>
-          </p>
+          <div className="flex flex-col items-center gap-3 md:items-end">
+
+            <p className="text-center text-[13px] text-white/70">
+              Designed and Developed by{" "}
+              <a
+                href="https://webgraphintegrated.com"
+                target="_blank"
+                className="font-medium transition hover:text-[#071D3A]"
+              >
+                Webgraph Integrated
+              </a>
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm md:justify-end">
+              <Link
+                href="/privacy-policy"
+                className="transition hover:text-[#071D3A]"
+              >
+                Privacy Policy
+              </Link>
+
+              <Link
+                href="/terms-and-conditions"
+                className="transition hover:text-[#071D3A]"
+              >
+                Terms & Conditions
+              </Link>
+            </div>
+
+          </div>
+
         </div>
       </footer>
     </main>
