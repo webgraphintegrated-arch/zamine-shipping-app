@@ -41,7 +41,8 @@ type CustomerOption = {
   full_name: string | null;
   email: string | null;
 };
-type PackageItem = {
+
+ type PackageItem = {
   customer: CustomerInfo | null;
   id: string;
   tracking_number: string;
@@ -54,11 +55,18 @@ type PackageItem = {
   customer_id: string;
   customer_label?: string | null;
   carrier?: string | null;
+
   weight_lbs: number | null;
+
+  declared_value: number | null;
+  package_category: string | null;
+
   shipping_cost: number | null;
   customs_cost: number | null;
+
   discount: number | null;
   total_due: number | null;
+
   payment_status: string | null;
 };
 /* =========================
@@ -327,71 +335,107 @@ await fetchPackages();
      START UPDATE BILLING
   ========================= */
   async function updateBilling(
-    packageId: string,
-    customerId: string,
-    trackingNumber: string,
-    field: keyof Pick<
-      PackageItem,
-      | "weight_lbs"
-      | "shipping_cost"
-      | "customs_cost"
-      | "discount"
-      | "payment_status"
-    >,
-    value: string
-  ) {
-    const currentPackage = packages.find((item) => item.id === packageId);
+  packageId: string,
+  customerId: string,
+  trackingNumber: string,
+  field: keyof Pick<
+    PackageItem,
+    | "weight_lbs"
+    | "declared_value"
+    | "package_category"
+    | "discount"
+    | "payment_status"
+  >,
+  value: string
+) {
+  const currentPackage = packages.find((item) => item.id === packageId);
 
-    if (!currentPackage) return;
+  if (!currentPackage) return;
 
-    const updatedPackage = {
-      ...currentPackage,
-      [field]:
-        field === "payment_status" ? value : value === "" ? null : Number(value),
-    };
+  const updatedPackage = {
+    ...currentPackage,
+    [field]:
+      field === "payment_status" || field === "package_category"
+        ? value
+        : value === ""
+        ? null
+        : Number(value),
+  };
 
-    const shippingCost = Number(updatedPackage.shipping_cost || 0);
-    const customsCost = Number(updatedPackage.customs_cost || 0);
-    const discount = Number(updatedPackage.discount || 0);
-    const totalDue = shippingCost + customsCost - discount;
+  const weight = Number(updatedPackage.weight_lbs || 0);
 
-    const updatePayload = {
-      [field]:
-        field === "payment_status" ? value : value === "" ? null : Number(value),
-      total_due: totalDue,
-    };
+  const declaredValue = Number(
+    updatedPackage.declared_value || 0
+  );
 
-    const { error } = await supabase
-      .from("packages")
-      .update(updatePayload)
-      .eq("id", packageId);
+  const discount = Number(updatedPackage.discount || 0);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+  const method = (
+    updatedPackage.shipping_method || ""
+  ).toUpperCase();
 
-    if (field === "payment_status") {
-      const { error: notificationError } = await supabase
-        .from("notifications")
-        .insert([
-          {
-            customer_id: customerId,
-            package_id: packageId,
-            title: "Payment Status Updated",
-            notification_type: "payment",
-            message: `Your package (${trackingNumber}) payment status was updated to "${value}".`,
-          },
-        ]);
+  /* =========================
+     SHIPPING COST
+  ========================= */
 
-      if (notificationError) {
-        alert(notificationError.message);
-        return;
-      }
-    }
+  const shippingCost =
+    method === "SEA"
+      ? weight * 6
+      : weight * 10;
 
-    await fetchPackages();
+  /* =========================
+     CUSTOMS LOGIC
+  ========================= */
+
+  const category = (
+    updatedPackage.package_category || ""
+  ).toLowerCase();
+
+  const isBook = category === "books";
+
+  const isUnderTwenty =
+    declaredValue < 20;
+
+  const customsCost =
+    isBook || isUnderTwenty
+      ? 0
+      : declaredValue * 0.515;
+
+  /* =========================
+     TOTAL
+  ========================= */
+
+  const totalDue = Math.max(
+    shippingCost + customsCost - discount,
+    0
+  );
+
+  const updatePayload = {
+    [field]:
+      field === "payment_status" ||
+      field === "package_category"
+        ? value
+        : value === ""
+        ? null
+        : Number(value),
+
+    shipping_cost: shippingCost,
+    customs_cost: customsCost,
+    total_due: totalDue,
+  };
+
+  const { error } = await supabase
+    .from("packages")
+    .update(updatePayload)
+    .eq("id", packageId);
+
+  if (error) {
+    alert(error.message);
+    return;
   }
+
+  await fetchPackages();
+}
   /* =========================
      END UPDATE BILLING
   ========================= */
@@ -1191,113 +1235,163 @@ await fetchPackages();
                           END PACKAGE STATUS FIELDS
                       ========================= */}
 
-                      {/* =========================
-                          START BILLING FIELDS
-                      ========================= */}
-                      <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-                        <div>
-                          <label className="mb-2 block text-sm font-semibold">
-                            Weight
-                          </label>
-                          <input
-                            type="number"
-                            defaultValue={item.weight_lbs || ""}
-                            placeholder="lbs"
-                            onBlur={(e) =>
-                              updateBilling(
-                                item.id,
-                                item.customer_id,
-                                item.tracking_number,
-                                "weight_lbs",
-                                e.target.value
-                              )
-                            }
-                            className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
-                          />
-                        </div>
+                     {/* =========================
+    START BILLING FIELDS
+========================= */}
 
-                        <div>
-                          <label className="mb-2 block text-sm font-semibold">
-                            Shipping Cost
-                          </label>
-                          <input
-                            type="number"
-                            defaultValue={item.shipping_cost || ""}
-                            placeholder="0.00"
-                            onBlur={(e) =>
-                              updateBilling(
-                                item.id,
-                                item.customer_id,
-                                item.tracking_number,
-                                "shipping_cost",
-                                e.target.value
-                              )
-                            }
-                            className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
-                          />
-                        </div>
+<div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-6">
 
-                        <div>
-                          <label className="mb-2 block text-sm font-semibold">
-                            Customs
-                          </label>
-                          <input
-                            type="number"
-                            defaultValue={item.customs_cost || ""}
-                            placeholder="0.00"
-                            onBlur={(e) =>
-                              updateBilling(
-                                item.id,
-                                item.customer_id,
-                                item.tracking_number,
-                                "customs_cost",
-                                e.target.value
-                              )
-                            }
-                            className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
-                          />
-                        </div>
+  {/* WEIGHT */}
+  <div>
+    <label className="mb-2 block text-sm font-semibold">
+      Weight (lbs)
+    </label>
 
-                        <div>
-                          <label className="mb-2 block text-sm font-semibold">
-                            Discount
-                          </label>
-                          <input
-                            type="number"
-                            defaultValue={item.discount || ""}
-                            placeholder="0.00"
-                            onBlur={(e) =>
-                              updateBilling(
-                                item.id,
-                                item.customer_id,
-                                item.tracking_number,
-                                "discount",
-                                e.target.value
-                              )
-                            }
-                            className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
-                          />
-                        </div>
+    <input
+      type="number"
+      defaultValue={item.weight_lbs || ""}
+      placeholder="lbs"
+      onBlur={(e) =>
+        updateBilling(
+          item.id,
+          item.customer_id,
+          item.tracking_number,
+          "weight_lbs",
+          e.target.value
+        )
+      }
+      className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
+    />
+  </div>
 
-                        <div className="rounded-2xl bg-[#061B36] p-4 text-white">
-                          <p className="text-sm text-white/60">Total Due</p>
-                          <h3 className="mt-1 text-2xl font-black">
-                            EC${Number(item.total_due || 0).toFixed(2)}
-                          </h3>
-                        </div>
+  {/* ITEM VALUE */}
+  <div>
+    <label className="mb-2 block text-sm font-semibold">
+      Item Value (EC$)
+    </label>
 
-                        <div className="flex items-end">
-                          <button
-                            onClick={() => generateInvoice(item)}
-                            className="h-12 w-full rounded-2xl bg-[#FC9700] px-5 text-sm font-black text-white transition hover:bg-[#e28700]"
-                          >
-                            Generate & Send Invoice
-                          </button>
-                        </div>
-                      </div>
-                      {/* =========================
-                          END BILLING FIELDS
-                      ========================= */}
+    <input
+      type="number"
+      defaultValue={item.declared_value || ""}
+      placeholder="EC$ value"
+      onBlur={(e) =>
+        updateBilling(
+          item.id,
+          item.customer_id,
+          item.tracking_number,
+          "declared_value",
+          e.target.value
+        )
+      }
+      className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
+    />
+  </div>
+
+  {/* CATEGORY */}
+  <div>
+    <label className="mb-2 block text-sm font-semibold">
+      Category
+    </label>
+
+    <select
+      defaultValue={
+        item.package_category || "General"
+      }
+      onChange={(e) =>
+        updateBilling(
+          item.id,
+          item.customer_id,
+          item.tracking_number,
+          "package_category",
+          e.target.value
+        )
+      }
+      className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
+    >
+      <option value="General">
+        General Item
+      </option>
+
+      <option value="Books">
+        Books Only
+      </option>
+    </select>
+  </div>
+
+  {/* DISCOUNT */}
+  <div>
+    <label className="mb-2 block text-sm font-semibold">
+      Discount
+    </label>
+
+    <input
+      type="number"
+      defaultValue={item.discount || ""}
+      placeholder="0.00"
+      onBlur={(e) =>
+        updateBilling(
+          item.id,
+          item.customer_id,
+          item.tracking_number,
+          "discount",
+          e.target.value
+        )
+      }
+      className="h-12 w-full rounded-2xl border border-[#dbe4f0] bg-white px-4 outline-none"
+    />
+  </div>
+
+  {/* SHIPPING */}
+  <div className="rounded-2xl bg-white p-4">
+    <p className="text-sm text-slate-500">
+      Shipping
+    </p>
+
+    <h3 className="mt-1 text-xl font-black text-[#071D3A]">
+      EC$
+      {Number(item.shipping_cost || 0).toFixed(2)}
+    </h3>
+  </div>
+
+  {/* CUSTOMS */}
+  <div className="rounded-2xl bg-white p-4">
+    <p className="text-sm text-slate-500">
+      Customs
+    </p>
+
+    <h3 className="mt-1 text-xl font-black text-[#071D3A]">
+      EC$
+      {Number(item.customs_cost || 0).toFixed(2)}
+    </h3>
+  </div>
+
+  {/* TOTAL */}
+  <div className="rounded-2xl bg-[#061B36] p-4 text-white md:col-span-2">
+    <p className="text-sm text-white/60">
+      Total Due
+    </p>
+
+    <h3 className="mt-1 text-2xl font-black">
+      EC$
+      {Number(item.total_due || 0).toFixed(2)}
+    </h3>
+  </div>
+
+  {/* INVOICE BUTTON */}
+  <div className="flex items-end md:col-span-2">
+    <button
+      onClick={() => generateInvoice(item)}
+      className="h-12 w-full rounded-2xl bg-[#FC9700] px-5 text-sm font-black text-white transition hover:bg-[#e28700]"
+    >
+      Generate & Send Invoice
+    </button>
+  </div>
+
+</div>
+
+{/* =========================
+    END BILLING FIELDS
+========================= */}
                     </div>
                   ))
                 )}
