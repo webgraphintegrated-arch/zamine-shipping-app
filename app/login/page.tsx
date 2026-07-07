@@ -180,7 +180,25 @@ export default function LoginPage() {
                   {loading ? "Logging In..." : "Login"}
                   <ArrowRight size={20} />
                 </button>
+                          
               </form>
+              <p className="mt-4 text-center text-xs leading-6 text-slate-500">
+            By signing in, you agree to our{" "}
+            <Link
+              href="/terms-and-conditions"
+              className="font-bold text-[#FC9700] hover:text-[#e28700]"
+            >
+              Terms & Conditions
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy-policy"
+              className="font-bold text-[#FC9700] hover:text-[#e28700]"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
 
               <p className="mt-6 text-center text-sm text-slate-600">
                 Don’t have an account?{" "}
